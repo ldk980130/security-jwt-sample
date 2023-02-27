@@ -1,5 +1,7 @@
 package com.spring.securityjwtsample.presentation
 
+import com.spring.securityjwtsample.security.auth.PrincipalDetails
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.ResponseBody
@@ -14,8 +16,8 @@ class IndexController{
 
     @GetMapping("/user")
     @ResponseBody
-    fun user(): String {
-        return "user"
+    fun user(@AuthenticationPrincipal principalDetails: PrincipalDetails): String {
+        return principalDetails.username
     }
 
     @GetMapping("/admin")

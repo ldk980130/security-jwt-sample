@@ -1,6 +1,8 @@
 package com.spring.securityjwtsample.security.auth
 
 import com.spring.securityjwtsample.domain.MemberRepository
+import com.spring.securityjwtsample.support.log
+import lombok.extern.slf4j.Slf4j
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.stereotype.Service
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service
  * 커스텀하려면 SecurityChain을 만들 때 http.usernamePrameter() 로 변경할 수 있다.
  */
 @Service
+@Slf4j
 class PrincipalDetailsService(
         private val memberRepository: MemberRepository
 ) : UserDetailsService {
@@ -21,6 +24,7 @@ class PrincipalDetailsService(
         validateUsernameBlank(username)
         val member = memberRepository.findByUsername(username!!)
                 ?: throw IllegalStateException("해당 username에 해당하는 회원이 없습니다.")
+        log().info("{} 권한 접근", member.role)
         return PrincipalDetails(member)
     }
 
