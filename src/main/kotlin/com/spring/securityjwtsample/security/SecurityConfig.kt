@@ -1,4 +1,4 @@
-package com.spring.securityjwtsample
+package com.spring.securityjwtsample.security
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -25,6 +25,8 @@ class SecurityConfig {
                 .and()
                 .formLogin()
                 .loginPage("/loginForm")
+                .loginProcessingUrl("/login") // /login이 호출되면 시큐리티가 낚아채서 대신 로그인 진행
+                .defaultSuccessUrl("/")
 
                 .and()
                 .build()
