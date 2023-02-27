@@ -1,10 +1,6 @@
 package com.spring.securityjwtsample.domain
 
-import jakarta.persistence.Entity
-import jakarta.persistence.EntityListeners
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
+import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.jpa.domain.support.AuditingEntityListener
 import java.time.LocalDateTime
@@ -15,7 +11,8 @@ class Member(
         val username: String,
         val password: String,
         val email: String,
-        val role: String
+        @Enumerated(EnumType.STRING)
+        val role: Role
 ) {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)

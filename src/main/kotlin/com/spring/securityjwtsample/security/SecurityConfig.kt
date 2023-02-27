@@ -1,7 +1,9 @@
 package com.spring.securityjwtsample.security
 
+import com.spring.securityjwtsample.domain.Role
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -10,6 +12,7 @@ import org.springframework.security.web.SecurityFilterChain
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(securedEnabled = true) // @Secured 어노테이션을 통해 url을 블락해준다.
 class SecurityConfig {
 
     @Bean
@@ -18,9 +21,9 @@ class SecurityConfig {
                 .csrf().disable()
 
                 .authorizeHttpRequests()
-                .requestMatchers("/user/**").authenticated()
-                .requestMatchers("/manager/**").hasAnyRole("ROLE_ADMIN", "ROLE_MANAGER")
-                .requestMatchers("/admin/**").hasRole("ROLE_ADMIN")
+                .requestMatchers("/user").authenticated()
+                .requestMatchers("/manager/**").hasAnyAuthority(Role.MANAGER.name, Role.ADMIN.name)
+                .requestMatchers("/admin/**").hasAuthority(Role.ADMIN.name)
                 .anyRequest().permitAll()
                 .and()
                 .formLogin()
