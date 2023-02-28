@@ -8,12 +8,13 @@ class SecurityUtil {
 
     companion object {
         fun authorize(principalDetails: PrincipalDetails) {
-            SecurityContextHolder.getContext().authentication =
-                UsernamePasswordAuthenticationToken(
-                    principalDetails,
-                    null,
-                    principalDetails.authorities
-                )
+            val context = SecurityContextHolder.createEmptyContext()
+            context.authentication = UsernamePasswordAuthenticationToken(
+                principalDetails,
+                null,
+                principalDetails.authorities
+            )
+            SecurityContextHolder.setContext(context)
         }
     }
 }
