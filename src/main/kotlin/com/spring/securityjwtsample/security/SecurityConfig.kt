@@ -9,48 +9,68 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.filter.CorsFilter
 
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true) // @Secured 어노테이션을 통해 url을 블락해준다.
-class SecurityConfig(
-        private val principalOauth2UserService: PrincipalOauth2UserService
+class SecurityConfig (
+    private val principalOauth2UserService: PrincipalOauth2UserService
 ) {
 
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain? {
         return http
-                .csrf().disable()
-
-                .authorizeHttpRequests()
-                .requestMatchers("/user").authenticated()
-                .requestMatchers("/manager/**").hasAnyAuthority(Role.MANAGER.name, Role.ADMIN.name)
-                .requestMatchers("/admin/**").hasAuthority(Role.ADMIN.name)
-                .anyRequest().permitAll()
-                .and()
-
-                .formLogin()
-                .loginPage("/loginForm")
-                .loginProcessingUrl("/login") // POST /login이 호출되면 시큐리티가 낚아채서 대신 로그인 진행
-                .defaultSuccessUrl("/")
-                .and()
-
-                // <a href="/oauth2/authorization/google">구글 로그인</a> 누르면 구글 로그인 시작
-                .oauth2Login()
-                // 구글 로그인 완료 후 후처리가 필요함
-                // 1.코드 받기
-                // 2.코드로 엑세스토큰 + 사용자 정보(프로필 등) 가져오기
-                .userInfoEndpoint()
-                .userService(principalOauth2UserService)
-                .and()
-
-                .and()
-                .build()
+            .csrf {
+                it.disable()
+            }
+            .formLogin() {
+                it.disable()
+            }
+            .httpBasic() {
+                it.disable()
+            }
+            .addFilter(corsFilter())
+            .authorizeHttpRequests {
+                it.requestMatchers("/api/user/**")
+                    .hasAnyAuthority(Role.USER.name, Role.MANAGER.name, Role.ADMIN.name)
+                it.requestMatchers("/api/manager/**")
+                    .hasAnyAuthority(Role.MANAGER.name, Role.ADMIN.name)
+                it.requestMatchers("/api/admin/**")
+                    .hasAuthority(Role.ADMIN.name)
+                it.anyRequest().permitAll()
+            }
+            .oauth2Login {
+                it.userInfoEndpoint().userService(principalOauth2UserService)
+                it.defaultSuccessUrl("/auth/login")
+            }
+            .build()
     }
 
     @Bean
     fun bCryptPasswordEncoder(): BCryptPasswordEncoder {
         return BCryptPasswordEncoder()
+    }
+
+
+    /**
+     * 스프링 MVC 단에서 cors 허용 처리를 할 수도 있지만
+     * 인증이 필요해서 시큐리티를 거치게 되면 통하지 않기에
+     * 시큐리티 단에서의 cors 처리가 필요하다.
+     */
+    @Bean
+    fun corsFilter(): CorsFilter {
+        val config = CorsConfiguration()
+        config.allowCredentials = true // 내 서버가 응답할 때 json을 자바스크립트에서 처리할 수 있게 설정하는 것
+        config.addAllowedOrigin("*")
+        config.addAllowedHeader("*")
+        config.addAllowedMethod("*")
+
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/api/**", config)
+        return CorsFilter(source)
     }
 }
