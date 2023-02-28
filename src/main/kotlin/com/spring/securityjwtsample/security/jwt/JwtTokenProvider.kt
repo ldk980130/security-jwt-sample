@@ -2,6 +2,7 @@ package com.spring.securityjwtsample.security.jwt
 
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.util.*
 import javax.crypto.SecretKey
@@ -10,9 +11,11 @@ const val TWELVE_HOURS_IN_MILLISECONDS: Long = 1000 * 60 * 60 * 12
 
 @Component
 class JwtTokenProvider(
-    private val signingKey: SecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256),
-    private val expirationInMilliseconds: Long = TWELVE_HOURS_IN_MILLISECONDS
+    @Value("\${token.secret-key}") secretKey: String
 ) {
+
+    private val signingKey: SecretKey = Keys.hmacShaKeyFor(secretKey.encodeToByteArray())
+    private val expirationInMilliseconds: Long = TWELVE_HOURS_IN_MILLISECONDS
 
     fun createToken(payload: Map<String, Any>): String {
         val now = Date()
@@ -25,10 +28,11 @@ class JwtTokenProvider(
             .compact()
     }
 
-    fun getPayload(token: String): Long {
+    fun getId(token: String): Long {
         return parseClaimsJws(token)
             .body
-            .get("id", Long::class.java)
+            .get("id", Integer::class.java)
+            .toLong()
     }
 
     private fun parseClaimsJws(token: String): Jws<Claims> {

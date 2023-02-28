@@ -1,24 +1,28 @@
 package com.spring.securityjwtsample.security
 
+import com.spring.securityjwtsample.domain.MemberRepository
 import com.spring.securityjwtsample.domain.Role
 import com.spring.securityjwtsample.security.auth.PrincipalOauth2UserService
+import com.spring.securityjwtsample.security.jwt.JwtAuthorizationFilter
+import com.spring.securityjwtsample.security.jwt.JwtTokenProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 import org.springframework.web.filter.CorsFilter
 
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true) // @Secured 어노테이션을 통해 url을 블락해준다.
-class SecurityConfig (
-    private val principalOauth2UserService: PrincipalOauth2UserService
+class SecurityConfig(
+    private val principalOauth2UserService: PrincipalOauth2UserService,
+    private val jwtTokenProvider: JwtTokenProvider,
+    private val memberRepository: MemberRepository
 ) {
 
     @Bean
@@ -27,13 +31,13 @@ class SecurityConfig (
             .csrf {
                 it.disable()
             }
-            .formLogin() {
+            .formLogin {
                 it.disable()
             }
-            .httpBasic() {
+            .httpBasic {
                 it.disable()
             }
-            .addFilter(corsFilter())
+
             .authorizeHttpRequests {
                 it.requestMatchers("/api/user/**")
                     .hasAnyAuthority(Role.USER.name, Role.MANAGER.name, Role.ADMIN.name)
@@ -47,14 +51,12 @@ class SecurityConfig (
                 it.userInfoEndpoint().userService(principalOauth2UserService)
                 it.defaultSuccessUrl("/auth/login")
             }
+            .addFilterBefore(
+                JwtAuthorizationFilter(jwtTokenProvider, memberRepository),
+                UsernamePasswordAuthenticationFilter::class.java
+            )
             .build()
     }
-
-    @Bean
-    fun bCryptPasswordEncoder(): BCryptPasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
-
 
     /**
      * 스프링 MVC 단에서 cors 허용 처리를 할 수도 있지만

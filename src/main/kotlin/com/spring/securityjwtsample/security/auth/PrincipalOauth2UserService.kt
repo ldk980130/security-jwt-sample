@@ -1,20 +1,15 @@
 package com.spring.securityjwtsample.security.auth
 
-import com.spring.securityjwtsample.domain.MemberRepository
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 /**
  * OAuth 로그인 후 후처리 되는 빈
  */
 @Service
-@Transactional
-class PrincipalOauth2UserService(
-        private val memberRepository: MemberRepository
-) : DefaultOAuth2UserService() {
+class PrincipalOauth2UserService: DefaultOAuth2UserService() {
 
     /**
      * 구글로부터 받은 데이터에 대한 후처리
@@ -25,6 +20,7 @@ class PrincipalOauth2UserService(
         validateRequestNull(userRequest)
         return super.loadUser(userRequest)
     }
+
 
     private fun validateRequestNull(userRequest: OAuth2UserRequest?) {
         if (userRequest == null) {
