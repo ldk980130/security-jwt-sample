@@ -35,13 +35,6 @@ class JwtTokenProvider(
             .toLong()
     }
 
-    private fun parseClaimsJws(token: String): Jws<Claims> {
-        return Jwts.parserBuilder()
-            .setSigningKey(signingKey)
-            .build()
-            .parseClaimsJws(token)
-    }
-
     fun isValidToken(token: String): Boolean {
         return try {
             !parseClaimsJws(token).body.expiration.before(Date())
@@ -50,5 +43,12 @@ class JwtTokenProvider(
         } catch (e: IllegalArgumentException) {
             false
         }
+    }
+
+    private fun parseClaimsJws(token: String): Jws<Claims> {
+        return Jwts.parserBuilder()
+            .setSigningKey(signingKey)
+            .build()
+            .parseClaimsJws(token)
     }
 }

@@ -1,12 +1,13 @@
 package com.spring.securityjwtsample.security.jwt
 
 import com.spring.securityjwtsample.domain.MemberRepository
+import com.spring.securityjwtsample.security.SecurityUtil
 import com.spring.securityjwtsample.security.auth.PrincipalDetails
+import com.spring.securityjwtsample.security.existBearerToken
+import com.spring.securityjwtsample.security.extractBearerToken
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
-import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
@@ -24,8 +25,8 @@ class JwtAuthorizationFilter(
         response: HttpServletResponse,
         chain: FilterChain
     ) {
-        if (JwtExtractor.existBearerToken(request)) {
-            val accessToken = JwtExtractor.extract(request)
+        if (request.existBearerToken()) {
+            val accessToken = request.extractBearerToken()
             authorize(accessToken)
         }
         chain.doFilter(request, response)
@@ -33,19 +34,9 @@ class JwtAuthorizationFilter(
 
     private fun authorize(accessToken: String) {
         if (jwtTokenProvider.isValidToken(accessToken)) {
-            configureSecurityContext(jwtTokenProvider.getId(accessToken))
+            val memberId = jwtTokenProvider.getId(accessToken)
+            val member = memberRepository.findById(memberId).orElseThrow()
+            SecurityUtil.authorize(PrincipalDetails(member))
         }
-    }
-
-    private fun configureSecurityContext(memberId: Long) {
-        val member = memberRepository.findById(memberId)
-            .orElseThrow()
-        val principalDetails = PrincipalDetails(member)
-        SecurityContextHolder.getContext().authentication =
-            UsernamePasswordAuthenticationToken(
-                principalDetails,
-                null,
-                principalDetails.authorities
-            )
     }
 }
